@@ -34,7 +34,7 @@
           var socket = io.connect();
           socket.on("photo", function(photo) {
             console.log("New photo:", photo);
-            app.photos.push({id: photo, path: "/image/" + photo});
+            app.addImage(photo);
           });
 
           fetch("/recent")
@@ -42,8 +42,13 @@
           .then(function(response) {
             console.log("Output:", response);
             for (var i in response)
-              app.photos.push({id: response[i].id, path: "/image/" + response[i].id});
+              app.addImage(response[i].id);
           });
+        },
+        methods: {
+          addImage: function(id) {
+            app.photos.push({id: id, path: "/image/" + id})
+          }
         }
       });
 
@@ -53,6 +58,15 @@
       }, function(err) {
         console.log("Failed to get video stream");
       });
+
+      function uploadFile(path, form, cbcomplete, cbprogress) {
+        var req = new XMLHttpRequest();
+        req.onload = cbcomplete;
+        req.upload.onprogress = cbprogress;
+
+        req.open("POST", path, true);
+        req.send(form);
+      }
 
       function snap() {
         var live = document.getElementById("live");
@@ -69,10 +83,12 @@
           var formData = new FormData();
           formData.append("file", blob, "image.jpg");
 
-          fetch("/image/upload", {method: "POST", body: formData})
-          .then(function(output) { return output.json() })
-          .then(function(result) {
-            console.log("Upload complete:", result);
+          uploadFile("/image/upload", formData,
+          function(ev) {
+            console.log("Upload complete:", ev.target.response);
+          },
+          function(ev) {
+            console.log("Upload in progress:", ev.loaded, ev.total);
           });
 
         }, "image/jpg");
