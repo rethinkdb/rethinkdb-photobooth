@@ -1,7 +1,7 @@
 var r = require("rethinkdb");
 var app = require("koa")();
 var router = require("koa-router")();
-var parse = require("co-busboy");
+var multipart = require("co-multipart");
 var bluebird = require("bluebird");
 var socketio = require("socket.io");
 var http = require("http");
@@ -12,17 +12,22 @@ app.use(router.routes());
 app.use(require("koa-bodyparser")());
 app.use(require("koa-static")(`${__dirname}/public`));
 
-router.post("/image/upload", function*() {
-  var part = yield parse(this, {autoFields: true});
-  var conn = yield r.connect(config.database);
+var fileToBuffer = bluebird.promisify(require("fs").readFile);
 
+router.post("/image/upload", function*() {
+  var parts = yield* multipart(this);
+  var part = parts.files[0];
+
+  var conn = yield r.connect(config.database);
   yield r.table("photos").insert({
     filename: part.filename,
     mimetype: part.mime,
-    image: part.read(),
+    image: yield fileToBuffer(part.path),
     time: r.now()
   }).run(conn);
+
   conn.close();
+  parts.dispose();
 
   this.body = {success: true};
 });
