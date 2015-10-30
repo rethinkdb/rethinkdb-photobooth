@@ -6,11 +6,20 @@
     <script src="http://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.2/moment.min.js"></script>
     <script src="http://cdnjs.cloudflare.com/ajax/libs/javascript-canvas-to-blob/2.2.0/js/canvas-to-blob.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+
+    <link rel="stylesheet" href="style.css" media="screen">
+
   </head>
   <body>
     <h2>RethinkDB Photo Booth</h2>
 
-    <video id="live" autoplay></video>
+    <p>
+      <span class="filters" v-repeat="f:filters">
+        <a href="#" v-on="click: onFilter">{{f}}</a> &nbsp;
+      </span>
+    </p>
+
+    <video v-class="applied" id="live" autoplay></video>
     <canvas id="snapshot" style="display:none"></canvas>
 
     <img id="image">
@@ -28,7 +37,11 @@
       var app = new Vue({
         el: "body",
         data: {
-          photos: []
+          applied: ["none"],
+          photos: [],
+          filters: [
+            "none", "xpro2", "willow", "walden", "valencia", "toaster",
+            "sutro", "sierra", "rise", "nashville", "kelvin", "inkwell", "1977"]
         },
         ready: function() {
           var socket = io.connect();
@@ -48,6 +61,11 @@
         methods: {
           addImage: function(id) {
             app.photos.push({id: id, path: "/image/" + id})
+          },
+
+          onFilter: function(ev) {
+            console.log("Activated filter...", ev);
+            app.applied = ["ig-" + ev.targetVM.f];
           }
         }
       });
