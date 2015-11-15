@@ -50,8 +50,14 @@ class Camera extends React.Component {
         }
     }
     componentDidMount() {
+        // Set up the webcam (depending on the browser prefix)
+        navigator.getUserMedia_ = (   navigator.getUserMedia
+                || navigator.webkitGetUserMedia 
+                || navigator.mozGetUserMedia 
+                || navigator.msGetUserMedia);
+
         // Open a live stream from the webcam
-        navigator.webkitGetUserMedia({video: true},
+        navigator.getUserMedia_({video: true},
             (stream) => { this.setState({webcamStream: window.URL.createObjectURL(stream)}); },
             (err) => { console.log('Failed to get video stream.'); }
         );

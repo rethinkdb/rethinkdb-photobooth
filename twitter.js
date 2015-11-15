@@ -9,23 +9,25 @@ r.connect(config.database).then(function(conn) {
 })
 .then(function(cursor) {
     cursor.each(function(err, item) {
+        console.log(config.twitter.accessToken);
+        console.log(config.twitter.accessSecret);
         console.log("New Item:", item);
         if (item.new_val !== null)
             twitterClient.uploadMedia(
-                    {media: item.new_val.image},
+                {media: item.new_val.image},
+                config.twitter.accessToken,
+                config.twitter.accessSecret,
+                function(err, result) {
+                    console.log("Test:", err, result);
+                    twitterClient.statuses("update", {
+                        status: "New picture from the @rethinkdb photo booth:",
+                        media_ids: result.media_id_string
+                    },
                     config.twitter.accessToken,
                     config.twitter.accessSecret,
-                    function(err, result) {
-                        console.log("Test:", err, result);
-                        twitterClient.statuses("update", {
-                            status: "New picture from the RethinkDB photobooth",
-                            media_ids: result.media_id_string
-                        },
-                        config.twitter.accessToken,
-                        config.twitter.accessSecret,
-                        function(err, response) {
-                            console.log("Tweeted:", err, response);
-                        });
+                    function(err, response) {
+                        console.log("Tweeted:", err, response);
                     });
+                });
     });
 });
