@@ -117,8 +117,12 @@ body {
 }
 .filmstrip {
     overflow-x: scroll;
-    height: 150px;
+    height: 200px;
     white-space: nowrap;
+}
+.filmstrip-container { 
+    height: 150px;
+    overflow: hidden;
 }
 .photo {
     display: inline-block;

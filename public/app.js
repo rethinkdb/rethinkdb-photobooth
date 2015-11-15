@@ -148,10 +148,12 @@ class Filmstrip extends React.Component {
         return(
             <div className="recent-photos">
                 <h1>Recently tweeted photos (@RethinkDBHQ):</h1>
-                <div className="filmstrip">
-                    {this.props.photos.map(
-                        (photo) => <Photo key={photo.id} img={photo.path} />
-                    )}
+                <div className="filmstrip-container">
+                    <div className="filmstrip">
+                        {this.props.photos.map(
+                            (photo) => <Photo key={photo.id} img={photo.path} />
+                        )}
+                    </div>
                 </div>
             </div>
         )
