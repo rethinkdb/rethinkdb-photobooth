@@ -73,7 +73,7 @@ bluebird.coroutine(function*() {
     (yield r.table('photos').changes().without('image').run(conn)).each((err, item) => {
         if (item && item.new_val) {
             io.sockets.emit('photo added', item.new_val);
-            tweetPhoto('Hanging out with the Thinker!', item.image);
+            tweetPhoto(item.image, 'New photo from the @rethinkdb photobooth:');
         } else if (item.new_val == null) {
             io.sockets.emit('photo removed', item.old_val);
         }
@@ -82,7 +82,7 @@ bluebird.coroutine(function*() {
 
 var tweetPhoto = bluebird.coroutine(function*(image, status) {
     // Tweet the photo with the status
-    /*yield twitterClient.uploadMedia(
+    yield twitterClient.uploadMedia(
         {media: image},
         config.twitter.accessToken,
         config.twitter.accessSecret,
@@ -97,7 +97,7 @@ var tweetPhoto = bluebird.coroutine(function*(image, status) {
                 console.log('Tweeted:', err, response);
             });
         }
-    );*/
+    );
 });
 
 // Start the server
