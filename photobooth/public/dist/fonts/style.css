@@ -25,24 +25,17 @@
 }
 
 .icon-image:before {
-	content: "\e900";
+    content: "\e900";
 }
-.icon-images:before {
-	content: "\e901";
-}
-.icon-play:before {
-	content: "\e902";
+.icon-spinner6:before {
+    content: "\e903";
 }
 .icon-spinner11:before {
-	content: "\e903";
+    content: "\e904";
 }
-.icon-loop2:before {
-	content: "\e904";
+.icon-checkmark:before {
+    content: "\e901";
 }
 .icon-twitter:before {
-	content: "\e905";
+    content: "\e905";
 }
-.icon-picassa:before {
-	content: "\e906";
-}
-

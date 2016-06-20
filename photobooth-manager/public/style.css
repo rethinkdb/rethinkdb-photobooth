@@ -1,0 +1,39 @@
+body {
+    background: white;
+    color: #414747;
+    font-family: 'Open Sans', sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+/* Photo index */
+.photos {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding: 0;
+    list-style-type: none;
+}
+
+.photo {
+    border: thin solid #b9cdcf;
+    padding: 15px;
+    margin-right: 20px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+
+.photo.removed { opacity: 0.4; }
+
+.photo h1 {
+    color: #98a6a6;
+    font-size: 14px;
+    font-weight: normal;
+    text-transform: uppercase;
+    margin-top: 10px;
+    margin-bottom: 0;
+}
+
+.photo img {
+    width: 275px;
+}

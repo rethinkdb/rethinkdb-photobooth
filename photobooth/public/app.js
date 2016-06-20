@@ -16,9 +16,20 @@ class PhotoBooth extends React.Component {
     componentDidMount() {
         // Open the Socket.IO connection
         const socket = this.state.socket;
-        socket.on('photo', (photo) =>  {
+
+        // Photo added
+        socket.on('photo added', (photo) =>  {
             console.log('New photo:', photo);
             this.addPhoto(photo);
+        })
+
+        // Photo removed
+        socket.on('photo removed', (photo) =>  {
+            console.log('Removed photo:', photo);
+            // Find and remove the photo from our index
+            let matching = this.state.photos.findIndex(existing => existing.id == photo.id);
+            if (matching >= 0)
+                this.setState(this.state.photos.splice(matching, 1));
         })
 
         // Fetch the latest images from the backend
@@ -26,15 +37,17 @@ class PhotoBooth extends React.Component {
             .then((output) => output.json())
             .then((response) => {
                 console.log("Output:", response);
-                response.reverse().map((photo) => this.addPhoto(photo));
+                response.map((photo) => this.addPhoto(photo));
             });
+
+
     }
     render() {
         return(
-            <div>
+            <section className="photobooth">
                 <Camera />
                 <Filmstrip photos={this.state.photos} />
-            </div>
+            </section>
         );
     }
 }
@@ -46,14 +59,16 @@ class Camera extends React.Component {
         this.state = {
             liveCamera: true,
             cameraWidth: 0,
-            cameraHeight: 0
+            cameraHeight: 0,
+            tweeted: false,
+            tweeting: false,
         }
     }
     componentDidMount() {
         // Set up the webcam (depending on the browser prefix)
         navigator.getUserMedia_ = (   navigator.getUserMedia
-                || navigator.webkitGetUserMedia 
-                || navigator.mozGetUserMedia 
+                || navigator.webkitGetUserMedia
+                || navigator.mozGetUserMedia
                 || navigator.msGetUserMedia);
 
         // Open a live stream from the webcam
@@ -94,15 +109,42 @@ class Camera extends React.Component {
     // Push the photo to our backend (and RethinkDB), which will then be tweeted
     tweetPhoto() {
         // Take the binary blob off the canvas and upload it to the backend server
+        this.setState({tweeting: true})
         this.refs.snapshot.toBlob((blob) => {
             const formData = new FormData();
-            formData.append("file", blob, "image.jpg");
+            formData.append('file', blob, 'image.jpg');
+            // Show that the upload has started
+            this.setState({
+                tweeting: true,
+                tweeted: false
+            })
 
-            PhotoUtils.uploadFile("/image/upload", formData,
-                (ev) => console.log("Upload complete:", ev.target.response),
-                (ev) => console.log("Upload in progress:", ev.loaded, ev.total),
-            "image/jpg");
+            PhotoUtils.uploadFile('/image/upload', formData,
+                (ev) => {
+                    console.log('Upload complete:', ev.target.response)
+                    // Show that the upload has completed
+                    setTimeout(() => {
+                        this.setState({
+                            tweeting: false,
+                            tweeted: true
+                        });
+                        // Reset our state and show the live camera
+                        setTimeout(() => this.setState({
+                            tweeting: false,
+                            tweeted: false,
+                            liveCamera: true
+                        }), 500);
+                    }, 500);
+                },
+                (ev) => console.log('Upload in progress:', ev.loaded, ev.total),
+            'image/jpg');
         });
+    }
+
+    renderTwitterStatus() {
+        if (this.state.tweeting) { return "Sharing..."; }
+        else if (this.state.tweeted) { return "Tweeted!"; }
+        else return "Tweet photo!";
     }
     render() {
         // Set CSS styles according to our current state (live camera or snapshot)
@@ -119,27 +161,30 @@ class Camera extends React.Component {
         return(
             <div className="camera-body">
                 <div ref="camera" className="camera">
-                    <video 
-                        ref="live" 
-                        src={this.state.webcamStream} 
+                    <video
+                        ref="live"
+                        src={this.state.webcamStream}
                         autoPlay
                         style={showingLiveCamera}></video>
                     <canvas
-                        ref="snapshot" 
+                        ref="snapshot"
                         style={showingSnapshot}
                         className="snapshot"></canvas>
                 </div>
                 <div className="camera-controls">
                     <div className="snapshot-controls" style={showingControls()}>
-                        <button 
+                        <button
                             onClick={this.showLiveCamera.bind(this)}
                             className="new-photo">New photo</button>
-                        <button 
+                        <button
                             onClick={this.tweetPhoto.bind(this)}
-                            className="tweet-photo">Tweet photo!</button>
+                            className={classNames('tweet-photo', {
+                                tweeting: this.state.tweeting,
+                                tweeted: this.state.tweeted,
+                            })}>{this.renderTwitterStatus()}</button>
                     </div>
                     <div className="live-controls" style={showingControls({live: false})}>
-                        <button 
+                        <button
                             onClick={this.snapPhoto.bind(this)}
                             className="snap-photo">Snap a photo!</button>
                     </div>
@@ -153,7 +198,7 @@ class Filmstrip extends React.Component {
     render() {
         return(
             <div className="recent-photos">
-                <h1>Recently tweeted photos (@RethinkDBHQ):</h1>
+                <h1>Recently tweeted photos (@ThinkerBooth):</h1>
                 <div className="filmstrip-container">
                     <div className="filmstrip">
                         {this.props.photos.map(
@@ -181,7 +226,7 @@ class PhotoUtils {
         req.onload = cbcomplete;
         req.upload.onprogress = cbprogress;
 
-        req.open("POST", path, true);
+        req.open('POST', path, true);
         req.send(form);
     }
 }
