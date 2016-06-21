@@ -5,4 +5,5 @@ module.exports = {
         db: "photobooth"
     },
     port: 8000,
+    photo_dir: "/path/to/thinkerbooth"
 };

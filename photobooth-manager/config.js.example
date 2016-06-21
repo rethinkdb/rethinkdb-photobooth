@@ -5,6 +5,7 @@ module.exports = {
         db: "photobooth"
     },
     port: 9000,
+    photo_dir: "/path/to/thinkerbooth"
     twitter: {
         consumerKey: '',
         consumerSecret: '',
