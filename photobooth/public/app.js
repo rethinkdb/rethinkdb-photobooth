@@ -18,14 +18,10 @@ class PhotoBooth extends React.Component {
         const socket = this.state.socket;
 
         // Photo added
-        socket.on('photo added', (photo) =>  {
-            console.log('New photo:', photo);
-            this.addPhoto(photo);
-        })
+        socket.on('photo added', (photo) => this.addPhoto(photo));
 
         // Photo removed
         socket.on('photo removed', (photo) =>  {
-            console.log('Removed photo:', photo);
             // Find and remove the photo from our index
             let matching = this.state.photos.findIndex(existing => existing.id == photo.id);
             if (matching >= 0)
@@ -35,12 +31,7 @@ class PhotoBooth extends React.Component {
         // Fetch the latest images from the backend
         fetch("/recent")
             .then((output) => output.json())
-            .then((response) => {
-                console.log("Output:", response);
-                response.map((photo) => this.addPhoto(photo));
-            });
-
-
+            .then((response) => response.reverse().map((photo) => this.addPhoto(photo)));
     }
     render() {
         return(
@@ -65,18 +56,27 @@ class Camera extends React.Component {
         }
     }
     componentDidMount() {
-        // Set up the webcam (depending on the browser prefix)
-        navigator.getUserMedia_ = (   navigator.getUserMedia
+        // Open a live stream from the webcam
+        const constraints = { audio: false, video: true }
+
+        // Use the new MediaDevices API (standard)
+        if (navigator.mediaDevices.getUserMedia) {
+            console.log('starting stream')
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then((stream) => this.setState({webcamStream: window.URL.createObjectURL(stream)}))
+                .catch((err) => console.log('Failed to get video stream.'));
+        }
+        // Some browsers don't have anything but the older getUserMedia API
+        else {
+            navigator.getUserMedia_ = (navigator.getUserMedia
                 || navigator.webkitGetUserMedia
                 || navigator.mozGetUserMedia
                 || navigator.msGetUserMedia);
-
-        // Open a live stream from the webcam
-        navigator.getUserMedia_({video: true},
-            (stream) => { this.setState({webcamStream: window.URL.createObjectURL(stream)}); },
-            (err) => { console.log('Failed to get video stream.'); }
-        );
-
+            navigator.getUserMedia_(constraints,
+                (stream) => { this.setState({webcamStream: window.URL.createObjectURL(stream)}); },
+                (err) => { console.log('Failed to get video stream.'); }
+            );
+        }
     }
     // Takes a photo using the webcam and shows the snapshot
     snapPhoto() {

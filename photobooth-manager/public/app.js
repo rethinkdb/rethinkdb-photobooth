@@ -19,13 +19,9 @@ class PhotoBoothManager extends React.Component {
     componentDidMount() {
         // Open the Socket.IO connection
         const socket = this.state.socket;
-        socket.on('photo added', (photo) =>  {
-            console.log('New photo:', photo);
-            this.addPhoto(photo);
-        })
+        socket.on('photo added', (photo) => this.addPhoto(photo));
 
         socket.on('photo removed', (photo) =>  {
-            console.log('Removed photo:', photo);
             // Find and remove the photo from our index
             let matching = this.state.photos.findIndex(existing => existing.id == photo.id);
             if (matching >= 0)
@@ -35,10 +31,7 @@ class PhotoBoothManager extends React.Component {
         // Get all the photos in the photobooth
         fetch("/photos")
             .then((output) => output.json())
-            .then((response) => {
-                console.log("Output:", response);
-                response.map((photo) => this.addPhoto(photo));
-            });
+            .then((response) => response.map((photo) => this.addPhoto(photo)));
     }
     render() {
         return(

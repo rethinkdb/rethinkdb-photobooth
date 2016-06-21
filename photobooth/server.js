@@ -60,12 +60,10 @@ router.get('/photo/:id', function *() {
 // Get the recent photos
 router.get('/recent', function *() {
     let conn = yield r.connect(config.database);
-    // Get recent photos, excluding the binary data stored in the document
-    // (to keep the document size small)
+    // Get recent 20 photos
     this.body = yield r.table('photos')
-        .orderBy({index: r.asc('time')})
+        .orderBy({index: r.desc('time')})
         .limit(20)
-        .without('image')
         .coerceTo('array').run(conn);
     conn.close();
 });

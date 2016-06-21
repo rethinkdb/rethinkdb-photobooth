@@ -35,7 +35,6 @@ router.del('/photos/:id', function *() {
 
 // Get a specific photo (by ID)
 router.get('/photos/:id', function *() {
-    // Serve the specific photo from the photos directory
     yield send(this, `${this.params.id}.png`, { root: config.photo_dir });
 });
 

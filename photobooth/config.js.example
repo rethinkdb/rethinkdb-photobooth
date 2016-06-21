@@ -4,6 +4,7 @@ module.exports = {
         port: 28015,
         db: "photobooth"
     },
+    letsencrypt: "~/letsencrypt/etc",
     port: 8000,
     photo_dir: "/path/to/thinkerbooth"
 };
