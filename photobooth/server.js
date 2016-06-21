@@ -1,46 +1,65 @@
-var r = require('rethinkdb');
-var app = require('koa')();
-var router = require('koa-router')();
-var multipart = require('co-multipart');
-var bluebird = require('bluebird');
-var socketio = require('socket.io');
-var http = require('http');
+'use strict';
 
-var config = require('./config');
+const r = require('rethinkdb');
+const app = require('koa')();
+const router = require('koa-router')();
+const send = require('koa-send');
+const multipart = require('co-multipart');
+const parse = require('co-busboy')
+const bluebird = require('bluebird');
+const socketio = require('socket.io');
+const http = require('http');
+const path = require('path');
+const fs = require('fs');
 
-// Get a file buffer
-var fileToBuffer = bluebird.promisify(require('fs').readFile);
 
-// Upload images as binary data to RethinkDB
-router.post('/image/upload', function*() {
-    var parts = yield* multipart(this);
-    var part = parts.files[0];
+const config = require('./config');
 
-    var conn = yield r.connect(config.database);
-    yield r.table('photos').insert({
-        filename: part.filename,
-        mimetype: part.mime,
-        image: yield fileToBuffer(part.path),
-        time: r.now()
-    }).run(conn);
+router.post('/photo/upload', function*() {
 
+    // Generate a unique ID and filename
+    let conn = yield r.connect(config.database);
+    let id = yield r.uuid().run(conn);
     conn.close();
-    parts.dispose();
+    let filename = path.resolve(config.photo_dir, `${id}.png`);
+
+    // Upload the photo
+    let parts = parse(this);
+    let part;
+    while (part = yield parts) {
+        // Make sure we have a stream (not busboy fields)
+        if (!part.length) {
+            // Write the file to our photos directory
+            part.pipe(fs.createWriteStream(filename));
+            // Upload finished, store metadata on the photo
+            part.on('end', () => {
+                bluebird.coroutine(function*() {
+                    console.log('Uploaded photo:',filename);
+                    let conn = yield r.connect(config.database);
+                    let new_photo = yield r.table('photos').insert({
+                        id: id,
+                        filename: filename,
+                        mimetype: 'image/png',
+                        time: r.now()
+                    }).run(conn);
+                    conn.close();
+                })();
+            });
+        }
+    }
 
     this.body = { status: 200, body: {success: true}}
 });
 
-// Get a specific image (by ID)
-router.get('/image/:id', function *() {
-    var conn = yield r.connect(config.database);
-    var output = yield r.table('photos').get(this.params.id).run(conn);
-    this.body = output.image;
-    conn.close();
+// Get a specific photo (by ID)
+router.get('/photo/:id', function *() {
+    // Serve the specific photo from the photos directory
+    yield send(this, `${this.params.id}.png`, { root: config.photo_dir });
 });
 
-// Get the recent images
+// Get the recent photos
 router.get('/recent', function *() {
-    var conn = yield r.connect(config.database);
+    let conn = yield r.connect(config.database);
     // Get recent photos, excluding the binary data stored in the document
     // (to keep the document size small)
     this.body = yield r.table('photos')
@@ -60,12 +79,12 @@ app.use(require('koa-bodyparser')());
 app.use(require('koa-static')(`${__dirname}/public`));
 
 // Set up the HTTP server and Socket.io
-var server = http.createServer(app.callback());
-var io = socketio(server);
+const server = http.createServer(app.callback());
+const io = socketio(server);
 
 // Set up the server with a few RethinkDB calls
 bluebird.coroutine(function*() {
-    var conn = yield r.connect(config.database);
+    let conn = yield r.connect(config.database);
 
     // Create the photos table and indexes if they don't already exists
     try {

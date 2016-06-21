@@ -10,7 +10,7 @@ class PhotoBooth extends React.Component {
         }
     }
     addPhoto(photo) {
-        const new_photo = {id: photo.id, path: "/image/" + photo.id}
+        const new_photo = {id: photo.id, path: "/photo/" + photo.id}
         this.setState({photos: [new_photo].concat(this.state.photos)});
     }
     componentDidMount() {
@@ -108,37 +108,39 @@ class Camera extends React.Component {
     }
     // Push the photo to our backend (and RethinkDB), which will then be tweeted
     tweetPhoto() {
-        // Take the binary blob off the canvas and upload it to the backend server
-        this.setState({tweeting: true})
-        this.refs.snapshot.toBlob((blob) => {
-            const formData = new FormData();
-            formData.append('file', blob, 'image.jpg');
-            // Show that the upload has started
-            this.setState({
-                tweeting: true,
-                tweeted: false
-            })
+        if (!this.state.tweeting && !this.state.tweeted) {
+            // Take the binary blob off the canvas and upload it to the backend server
+            this.setState({tweeting: true})
+            this.refs.snapshot.toBlob((blob) => {
+                const formData = new FormData();
+                formData.append('file', blob, 'photo.png');
+                // Show that the upload has started
+                this.setState({
+                    tweeting: true,
+                    tweeted: false
+                })
 
-            PhotoUtils.uploadFile('/image/upload', formData,
-                (ev) => {
-                    console.log('Upload complete:', ev.target.response)
-                    // Show that the upload has completed
-                    setTimeout(() => {
-                        this.setState({
-                            tweeting: false,
-                            tweeted: true
-                        });
-                        // Reset our state and show the live camera
-                        setTimeout(() => this.setState({
-                            tweeting: false,
-                            tweeted: false,
-                            liveCamera: true
-                        }), 500);
-                    }, 500);
-                },
-                (ev) => console.log('Upload in progress:', ev.loaded, ev.total),
-            'image/jpg');
-        });
+                PhotoUtils.uploadFile('/photo/upload', formData,
+                    (ev) => {
+                        console.log('Upload complete:', ev.target.response)
+                        // Show that the upload has completed
+                        setTimeout(() => {
+                            this.setState({
+                                tweeting: false,
+                                tweeted: true
+                            });
+                            // Reset our state and show the live camera
+                            setTimeout(() => this.setState({
+                                tweeting: false,
+                                tweeted: false,
+                                liveCamera: true
+                            }), 500);
+                        }, 500);
+                    },
+                    (ev) => console.log('Upload in progress:', ev.loaded, ev.total),
+                'image/png');
+            });
+        }
     }
 
     renderTwitterStatus() {
