@@ -2,6 +2,7 @@
   "dependencies": {
     "bluebird": "^3.0.0",
     "co-multipart": "^2.0.0",
+    "gm": "^1.23.0",
     "koa": "^1.1.1",
     "koa-bodyparser": "^2.0.1",
     "koa-router": "^5.2.3",

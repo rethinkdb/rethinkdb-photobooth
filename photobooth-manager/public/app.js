@@ -10,7 +10,7 @@ class PhotoBoothManager extends React.Component {
         }
     }
     addPhoto(photo) {
-        const new_photo = {id: photo.id, path: "/photos/" + photo.id, time: photo.time}
+        const new_photo = {id: photo.id, path: "/thumbnails/" + photo.id, time: photo.time}
         // Make sure this photo hasn't been added before
         let matching = this.state.photos.findIndex(existing => existing.id == photo.id);
         if (matching < 0)

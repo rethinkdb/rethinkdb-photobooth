@@ -35,7 +35,15 @@ router.del('/photos/:id', function *() {
 
 // Get a specific photo (by ID)
 router.get('/photos/:id', function *() {
+    // Serve the specific photo from the photos directory
     yield send(this, `${this.params.id}.png`, { root: config.photo_dir });
+});
+
+// Get a specific thumbnail (by ID)
+router.get('/thumbnails/:id', function *() {
+    // Serve the specific thumbnail from the thumbnails directory
+    let photosRoot = path.resolve(config.photo_dir, 'thumbnails');
+    yield send(this, `${this.params.id}.png`, { root: photosRoot });
 });
 
 // Tweet a specific photo (by ID)

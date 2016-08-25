@@ -11,6 +11,7 @@ const socketio = require('socket.io');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
+const gm = require('gm');
 
 
 const config = require('./config');
@@ -22,6 +23,7 @@ router.post('/photo/upload', function*() {
     let id = yield r.uuid().run(conn);
     conn.close();
     let filename = path.resolve(config.photo_dir, `${id}.png`);
+    let thumbnail = path.resolve(config.photo_dir, 'thumbnails', `${id}.png`);
 
     // Upload the photo
     let parts = parse(this);
@@ -31,19 +33,29 @@ router.post('/photo/upload', function*() {
         if (!part.length) {
             // Write the file to our photos directory
             part.pipe(fs.createWriteStream(filename));
-            // Upload finished, store metadata on the photo
+            // Upload of original photo finished
             part.on('end', () => {
-                bluebird.coroutine(function*() {
-                    console.log('Uploaded photo:',filename);
-                    let conn = yield r.connect(config.database);
-                    let new_photo = yield r.table('photos').insert({
-                        id: id,
-                        filename: filename,
-                        mimetype: 'image/png',
-                        time: r.now()
-                    }).run(conn);
-                    conn.close();
-                })();
+                // Add thumbnail
+                gm(filename)
+                    .resize(275)
+                    .noProfile()
+                    .write(thumbnail, function(err) {
+                        if (err) console.log(`Couldn't resize image ${id}.png: ${err}`);
+                        else {
+                          // Store metadata on the photo
+                          bluebird.coroutine(function*() {
+                              console.log('Uploaded photo:',filename);
+                              let conn = yield r.connect(config.database);
+                              let new_photo = yield r.table('photos').insert({
+                                  id: id,
+                                  filename: filename,
+                                  mimetype: 'image/png',
+                                  time: r.now()
+                              }).run(conn);
+                              conn.close();
+                          })();
+                        }
+                    });
             });
         }
     }
@@ -52,9 +64,16 @@ router.post('/photo/upload', function*() {
 });
 
 // Get a specific photo (by ID)
-router.get('/photo/:id', function *() {
+router.get('/photos/:id', function *() {
     // Serve the specific photo from the photos directory
     yield send(this, `${this.params.id}.png`, { root: config.photo_dir });
+});
+
+// Get a specific thumbnail (by ID)
+router.get('/thumbnails/:id', function *() {
+    // Serve the specific thumbnail from the thumbnails directory
+    let photosRoot = path.resolve(config.photo_dir, 'thumbnails');
+    yield send(this, `${this.params.id}.png`, { root: photosRoot });
 });
 
 // Get the recent photos

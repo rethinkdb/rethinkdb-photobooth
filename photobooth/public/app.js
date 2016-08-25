@@ -10,7 +10,7 @@ class PhotoBooth extends React.Component {
         }
     }
     addPhoto(photo) {
-        const new_photo = {id: photo.id, path: "/photo/" + photo.id}
+        const new_photo = {id: photo.id, path: "/thumbnails/" + photo.id}
         this.setState({photos: [new_photo].concat(this.state.photos)});
     }
     componentDidMount() {
